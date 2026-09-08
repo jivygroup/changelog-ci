@@ -3,7 +3,9 @@ from unittest import mock
 
 from scripts.config import (
     COMMIT_MESSAGE,
+    LATEST_RELEASE,
     MARKDOWN_FILE,
+    PREVIOUS_MINOR_RELEASE,
     PULL_REQUEST,
     RESTRUCTUREDTEXT_FILE,
     Configuration,
@@ -327,6 +329,40 @@ class TestConfiguration(unittest.TestCase):
             Configuration._clean_group_config_item({"title": "test", "labels": None})
         )
         self.assertIsNone(Configuration._clean_group_config_item({"title": "test"}))
+
+    def test_clean_release_anchor(self, gha_utils):
+        self.assertEqual(
+            Configuration.clean_release_anchor(LATEST_RELEASE), LATEST_RELEASE
+        )
+        self.assertEqual(
+            Configuration.clean_release_anchor(PREVIOUS_MINOR_RELEASE),
+            PREVIOUS_MINOR_RELEASE,
+        )
+
+        # invalid values fall back to the default by returning None
+        self.assertIsNone(Configuration.clean_release_anchor("previous_major"))
+        self.assertIsNone(Configuration.clean_release_anchor(""))
+        self.assertIsNone(Configuration.clean_release_anchor(None))
+        self.assertIsNone(Configuration.clean_release_anchor(1))
+        self.assertIsNone(Configuration.clean_release_anchor(["latest"]))
+
+    def test_clean_base_branches(self, gha_utils):
+        self.assertEqual(Configuration.clean_base_branches(["develop"]), ["develop"])
+        self.assertEqual(
+            Configuration.clean_base_branches(["develop", "release/3.5.0"]),
+            ["develop", "release/3.5.0"],
+        )
+
+        # non-list, empty and falsy-item-only values disable the filter
+        self.assertEqual(Configuration.clean_base_branches("develop"), [])
+        self.assertEqual(Configuration.clean_base_branches([]), [])
+        self.assertEqual(Configuration.clean_base_branches([""]), [])
+        self.assertEqual(Configuration.clean_base_branches(None), [])
+
+    def test_release_anchor_defaults_to_latest(self, gha_utils):
+        config = Configuration.create({})
+        self.assertEqual(config.release_anchor, LATEST_RELEASE)
+        self.assertEqual(config.base_branches, [])
 
     def test_clean_exclude_labels(self, gha_utils):
         exclude_labels = ["skip-changelog", "dependabot"]

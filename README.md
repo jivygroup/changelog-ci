@@ -200,6 +200,8 @@ These are the options that can be provided on the `config_file`.
 | `include_unlabeled_changes` | No       | if set to `false` the generated changelog will not contain the Pull Requests that are unlabeled or the labels are not on the `group_config` option. This option will only be used if the `group_config` option is added and the `changelog_type` option is set to `pull_request`. | `true`                                       | `true` or `false`                  |
 | `unlabeled_group_title`     | No       | This option will set the title of the unlabeled changes. This option will only be used if the `include_unlabeled_changes` option is set to `true`, `group_config` option is added and the `changelog_type` option is set to `pull_request`.                                       | `Other Changes`                              |                                    |
 | `exclude_labels`            | No       | If the pull Request includes one of the labels in this option the changelog for that pull request will be ignored.                                                                                                                                                                | `null`                                       |                                    |
+| `release_anchor`            | No       | Which previous release the changelog window starts from. `latest` uses GitHub's most recently **published** release, which means an interleaved hotfix release becomes the anchor and truncates the changelog. `previous_minor` instead resolves the highest `X.Y.0` release below the version being released. Use `previous_minor` for GitFlow repositories that publish hotfix releases between feature releases. | `latest`                                     | `latest` or `previous_minor`       |
+| `base_branches`             | No       | Only include pull requests that were merged into one of these branches. Leave unset to include pull requests regardless of their target branch. Useful to keep hotfix pull requests, whose changes already shipped in a patch release, out of the next feature release changelog.  | `null`                                       |                                    |
 
 #### Example Configuration File
 
@@ -215,6 +217,8 @@ Written in JSON:
   "unlabeled_group_title": "Unlabeled Changes",
   "pull_request_title_regex": "^Release",
   "version_regex": "v?([0-9]{1,2})+[.]+([0-9]{1,2})+[.]+([0-9]{1,2})\\s\\(\\d{1,2}-\\d{1,2}-\\d{4}\\)",
+  "release_anchor": "previous_minor",
+  "base_branches": ["develop"],
   "exclude_labels": ["bot", "dependabot", "ci"],
   "group_config": [
     {
@@ -248,6 +252,9 @@ include_unlabeled_changes: true
 unlabeled_group_title: 'Unlabeled Changes'
 pull_request_title_regex: '^Release'
 version_regex: 'v?([0-9]{1,2})+[.]+([0-9]{1,2})+[.]+([0-9]{1,2})\s\(\d{1,2}-\d{1,2}-\d{4}\)'
+release_anchor: "previous_minor"
+base_branches:
+  - "develop"
 exclude_labels:
   - bot
   - dependabot
