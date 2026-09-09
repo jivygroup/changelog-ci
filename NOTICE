@@ -1,0 +1,58 @@
+Changelog CI (Jivy Group fork)
+==============================
+
+This repository is a fork of the "Changelog CI" GitHub Action:
+
+    Upstream project: https://github.com/saadmk11/changelog-ci
+    Upstream author:  Maksudul Haque (saadmk11)
+    Upstream license: MIT (see LICENSE)
+
+Fork point
+----------
+
+Forked from upstream commit 235aaf1f27be30946e4463fcb3d4f2864e807445
+("Merge pull request #110 from saadmk11/release-1.2.0", 2025-07-15),
+which corresponds to upstream release 1.2.0.
+
+Fork location: https://github.com/jivygroup/changelog-ci
+
+Modifications
+-------------
+
+This fork has been modified from the upstream original. Changes made by
+Jivy Group are recorded in this repository's git history. Notable changes:
+
+  * Dockerfile: Debian base updated from bullseye to bookworm, keeping
+    upstream's Python 3.12 (python:3.12-slim-bookworm).
+  * Dockerfile: OCI/Action metadata labels repointed from the upstream
+    repository to this fork.
+
+Copyright
+---------
+
+    Copyright (c) 2021 Maksudul Haque
+    Copyright (c) 2026 Jivy Group (modifications)
+
+The original MIT license and copyright notice are retained in full in the
+LICENSE file, as required by that license. This NOTICE file is informational
+and does not add terms to, or subtract terms from, the MIT license.
+
+Third-party components
+----------------------
+
+The container image built from this repository bundles third-party software
+under its own licenses, including (but not limited to):
+
+    PyYAML                  MIT
+    urllib3                 MIT
+    charset-normalizer      MIT
+    github-action-utils     MIT
+    requests                Apache-2.0
+    idna                    BSD-3-Clause
+    certifi                 MPL-2.0
+    git and the Debian base image
+                            GPL-2.0 and various other licenses
+
+These components are used unmodified. If the built image is ever
+redistributed outside this organization, their respective license texts and
+notices must be included with it.

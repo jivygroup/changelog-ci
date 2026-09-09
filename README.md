@@ -1,10 +1,17 @@
 ![Changelog CI Banner](https://i.imgur.com/72lxPjs.png)
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/saadmk11/changelog-ci?style=flat-square)](https://github.com/saadmk11/changelog-ci/releases/latest)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/saadmk11/changelog-ci/Changelog%20CI?label=Changelog%20CI&style=flat-square)
-[![GitHub](https://img.shields.io/github/license/saadmk11/changelog-ci?style=flat-square)](https://github.com/saadmk11/changelog-ci/blob/master/LICENSE)
-[![GitHub Marketplace](https://img.shields.io/badge/Get%20It-on%20Marketplace-orange?style=flat-square)](https://github.com/marketplace/actions/changelog-ci)
-[![GitHub stars](https://img.shields.io/github/stars/saadmk11/changelog-ci?color=success&style=flat-square)](https://github.com/saadmk11/changelog-ci/stargazers)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/jivygroup/changelog-ci?style=flat-square)](https://github.com/jivygroup/changelog-ci/releases/latest)
+[![Test](https://img.shields.io/github/actions/workflow/status/jivygroup/changelog-ci/test.yaml?branch=master&label=tests&style=flat-square)](https://github.com/jivygroup/changelog-ci/actions/workflows/test.yaml)
+[![License](https://img.shields.io/github/license/jivygroup/changelog-ci?style=flat-square)](https://github.com/jivygroup/changelog-ci/blob/master/LICENSE)
+
+> ### About this fork
+>
+> This is the Jivy Group fork of [`saadmk11/changelog-ci`](https://github.com/saadmk11/changelog-ci),
+> maintained for internal use. Use `jivygroup/changelog-ci@v1.3.0` in your workflows.
+>
+> Forked at upstream release `1.2.0`. Original work is Copyright (c) 2021 Maksudul Haque
+> and is used under the MIT license — see [LICENSE](LICENSE) and [NOTICE](NOTICE) for the
+> full provenance and the list of modifications.
 
 ## What is Changelog CI?
 
@@ -67,7 +74,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Run Changelog CI
-        uses: saadmk11/changelog-ci@v1.2.0
+        uses: jivygroup/changelog-ci@v1.3.0
 ```
 
 ### Workflow input options
@@ -108,7 +115,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Run Changelog CI
-        uses: saadmk11/changelog-ci@v1.2.0
+        uses: jivygroup/changelog-ci@v1.3.0
         with:
           # Optional, you can provide any name for your changelog file,
           # We currently support Markdown (.md) and reStructuredText (.rst) files
@@ -142,7 +149,7 @@ some other options, see [Configuration](#configuration) to learn more.
 ![Changelog CI Status](https://github.com/<username>/<repository>/workflows/Changelog%20CI/badge.svg)
 ```
 
-![Changelog CI Status](https://github.com/saadmk11/changelog-ci/workflows/Changelog%20CI/badge.svg)
+![Changelog CI Status](https://github.com/jivygroup/changelog-ci/workflows/Changelog%20CI/badge.svg)
 
 #### Workflow Output:
 
@@ -151,7 +158,7 @@ The output can be used in other steps of the action. For example:
 
 ```yaml
 - name: changelog-ci
-  uses: saadmk11/changelog-ci@v1.2.0
+  uses: jivygroup/changelog-ci@v1.3.0
   id: changelog-ci
 
 - name: Get Changelog Output

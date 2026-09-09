@@ -5,9 +5,12 @@ LABEL "com.github.actions.description"="Changelog CI is a GitHub Action that gen
 LABEL "com.github.actions.icon"="clock"
 LABEL "com.github.actions.color"="blue"
 
-LABEL "repository"="https://github.com/saadmk11/changelog-ci"
-LABEL "homepage"="https://github.com/saadmk11/changelog-ci"
-LABEL "maintainer"="saadmk11"
+LABEL "repository"="https://github.com/jivygroup/changelog-ci"
+LABEL "homepage"="https://github.com/jivygroup/changelog-ci"
+LABEL "maintainer"="jivygroup"
+LABEL "org.opencontainers.image.source"="https://github.com/jivygroup/changelog-ci"
+LABEL "org.opencontainers.image.licenses"="MIT"
+LABEL "org.opencontainers.image.description"="Fork of saadmk11/changelog-ci (MIT). See NOTICE."
 
 RUN apt-get update \
     && apt-get install \
