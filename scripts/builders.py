@@ -1,18 +1,38 @@
 import copy
+import re
 from functools import lru_cache
 from typing import Any
 
 import github_action_utils as gha_utils  # type: ignore
 import requests
 
-from .config import MARKDOWN_FILE, ActionEnvironment, Configuration
+from .config import (
+    MARKDOWN_FILE,
+    PREVIOUS_MINOR_RELEASE,
+    ActionEnvironment,
+    Configuration,
+)
 from .utils import get_request_headers
+
+SEMVER_TAG_REGEX = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
+
+
+def parse_version(value: str) -> tuple[int, int, int] | None:
+    """Parse a `X.Y.Z` (or `vX.Y.Z`) string into a comparable tuple"""
+    match = SEMVER_TAG_REGEX.match(value.strip())
+
+    if not match:
+        return None
+
+    return int(match.group(1)), int(match.group(2)), int(match.group(3))
 
 
 class ChangelogBuilderBase:
     """Base Class for Changelog Builder"""
 
     GITHUB_API_URL: str = "https://api.github.com"
+    # Safety bound on pagination when resolving the changelog anchor
+    MAX_RELEASE_PAGES: int = 10
 
     def __init__(
         self,
@@ -66,6 +86,86 @@ class ChangelogBuilderBase:
             )
         return published_date
 
+    def _get_previous_minor_release_date(self) -> str:
+        """Using GitHub API gets the publish date of the previous minor release
+
+        `GET /releases/latest` returns the most recently *published* release,
+        which means an interleaved hotfix release (e.g. `3.4.7` published after
+        work had already landed for `3.5.0`) becomes the anchor and silently
+        truncates the changelog window. This resolves the anchor by version
+        instead: the highest `X.Y.0` release below the version being released.
+        """
+        target_version = parse_version(str(self.release_version))
+
+        if not target_version:
+            gha_utils.warning(
+                f"Could not parse `{self.release_version}` as a version number, "
+                f"falling back to the latest release as the changelog anchor."
+            )
+            return self._get_latest_release_date()
+
+        candidates: list[tuple[tuple[int, int, int], str, str]] = []
+        page = 1
+
+        # `/releases` is ordered by creation date, not by version, so every
+        # page has to be inspected before the highest match is known.
+        while page <= self.MAX_RELEASE_PAGES:
+            url = (
+                f"{self.GITHUB_API_URL}/repos/"
+                f"{self.action_env.repository}/releases"
+                f"?per_page=100&page={page}"
+            )
+            response = requests.get(
+                url, headers=get_request_headers(self.config.github_token)
+            )
+
+            if response.status_code != 200:
+                gha_utils.warning(
+                    f"Could not list releases for {self.action_env.repository}, "
+                    f"status code: {response.status_code}"
+                )
+                break
+
+            response_data = response.json()
+
+            if not response_data:
+                break
+
+            for item in response_data:
+                if item.get("draft"):
+                    continue
+
+                version = parse_version(item.get("tag_name") or "")
+
+                # Only minor releases (`patch == 0`) are anchors, and only
+                # those strictly below the version being released.
+                if version and version[2] == 0 and version < target_version:
+                    candidates.append((version, item["tag_name"], item["published_at"]))
+
+            page += 1
+
+        if not candidates:
+            gha_utils.warning(
+                f"Could not find a previous minor release below "
+                f"`{self.release_version}` for {self.action_env.repository}, "
+                f"falling back to the latest release as the changelog anchor."
+            )
+            return self._get_latest_release_date()
+
+        version, tag_name, published_date = max(candidates)
+        gha_utils.notice(
+            f"Using release `{tag_name}` (published {published_date}) as the "
+            f"changelog anchor for version `{self.release_version}`."
+        )
+        return str(published_date)
+
+    def _get_anchor_release_date(self) -> str:
+        """Get the publish date the changelog window should start from"""
+        if self.config.release_anchor == PREVIOUS_MINOR_RELEASE:
+            return self._get_previous_minor_release_date()
+
+        return self._get_latest_release_date()
+
     def build(self) -> str:
         """Generate the changelog"""
         self.change_list = self._get_changes_after_last_release()
@@ -96,7 +196,7 @@ class PullRequestChangelogBuilder(ChangelogBuilderBase):
 
     def _get_changes_after_last_release(self) -> list[dict[str, str | int | list[str]]]:
         """Get all the merged pull request after latest release"""
-        previous_release_date = self._get_latest_release_date()
+        previous_release_date = self._get_anchor_release_date()
 
         if previous_release_date:
             merged_date_filter = "merged:>=" + previous_release_date
@@ -104,6 +204,13 @@ class PullRequestChangelogBuilder(ChangelogBuilderBase):
             # if there is no release for the repo then
             # do not filter by merged date
             merged_date_filter = ""
+
+        # Repeated `base:` qualifiers are OR-ed together by the search API, so
+        # this keeps pull requests that targeted an unrelated branch (e.g. a
+        # hotfix branch whose changes already shipped) out of the changelog.
+        base_branch_filter = "".join(
+            f"base:{branch}+" for branch in self.config.base_branches
+        )
 
         # Detail on the GitHub Search API:
         # https://docs.github.com/en/rest/search#search-issues-and-pull-requests
@@ -115,6 +222,7 @@ class PullRequestChangelogBuilder(ChangelogBuilderBase):
             "is:pr+"
             "is:merged+"
             "sort:created-asc+"
+            f"{base_branch_filter}"
             f"{merged_date_filter}"
             "&per_page=100"
         )
@@ -243,7 +351,7 @@ class CommitMessageChangelogBuilder(ChangelogBuilderBase):
         # Detail on the GitHub Commits API:
         # https://docs.github.com/en/rest/commits/commits#list-commits
         url = f"{self.GITHUB_API_URL}/repos/{self.action_env.repository}/commits?per_page=100"
-        previous_release_date = self._get_latest_release_date()
+        previous_release_date = self._get_anchor_release_date()
 
         if previous_release_date:
             url = f"{url}&since={previous_release_date}"

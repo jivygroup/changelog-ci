@@ -13,6 +13,10 @@ COMMIT_MESSAGE: str = "commit_message"
 MARKDOWN_FILE: str = "md"
 RESTRUCTUREDTEXT_FILE: str = "rst"
 
+# Release Anchors: which previous release the changelog window starts from
+LATEST_RELEASE: str = "latest"
+PREVIOUS_MINOR_RELEASE: str = "previous_minor"
+
 
 UserConfigType = dict[str, str | bool | list[dict[str, str | list[str]]] | None]
 
@@ -57,6 +61,8 @@ class Configuration(NamedTuple):
         r"0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?"
     )
     changelog_type: str = PULL_REQUEST
+    release_anchor: str = LATEST_RELEASE
+    base_branches: list[str] = []
     group_config: list[dict[str, str | list[str]]] = []
     exclude_labels: list[str] = []
     include_unlabeled_changes: bool = True
@@ -336,6 +342,39 @@ class Configuration(NamedTuple):
         else:
             gha_utils.notice("`github_token` was not provided as an input.")
             return None
+
+    @classmethod
+    def clean_release_anchor(cls, value: Any) -> str | None:
+        """clean release_anchor configuration option"""
+        if (
+            value
+            and isinstance(value, str)
+            and value
+            in (
+                LATEST_RELEASE,
+                PREVIOUS_MINOR_RELEASE,
+            )
+        ):
+            return value
+        else:
+            gha_utils.warning(
+                "`release_anchor` was not provided or not valid, "
+                f"valid options are `{LATEST_RELEASE}` and "
+                f"`{PREVIOUS_MINOR_RELEASE}`, "
+                f"falling back to default value `{LATEST_RELEASE}`."
+            )
+            return None
+
+    @classmethod
+    def clean_base_branches(cls, value: Any) -> list[str] | None:
+        """clean base_branches configuration option"""
+        if value and isinstance(value, list):
+            branches = [str(item) for item in value if item]
+            if branches:
+                return branches
+
+        gha_utils.notice("`base_branches` was not provided as an input.")
+        return []
 
     @classmethod
     def clean_exclude_labels(cls, value: Any) -> list[str] | None:
